@@ -1008,24 +1008,27 @@ body.ml-active .header  { display:none; }
 
 /* ===== BOTÃO PRECISO DE AJUDA AGORA ===== */
 #btn-ajuda-agora {
-  position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);
-  z-index:9990;
-  background:linear-gradient(135deg,#c0392b,#96281b);
-  border:none;border-radius:40px;
-  padding:.8rem 1.8rem;
-  color:#fff;font-family:'Lato',sans-serif;font-size:.95rem;font-weight:900;
-  letter-spacing:.04em;cursor:pointer;
-  box-shadow:0 4px 20px rgba(192,57,43,.5);
-  display:flex;align-items:center;gap:.6rem;
+  position:fixed;bottom:1.5rem;left:1rem;z-index:9998;
+  background:rgba(150,40,27,0.9);border:1px solid rgba(232,80,60,0.5);border-radius:50%;
+  width:48px;height:48px;
+  color:#fff;font-family:'Lato',sans-serif;font-size:1.2rem;
+  cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,.45);
+  display:flex;align-items:center;justify-content:center;
   transition:transform .15s,box-shadow .15s;
-  white-space:nowrap;
-  animation:pulseRed 2.5s ease-in-out infinite;
+  -webkit-tap-highlight-color:transparent;
 }
-#btn-ajuda-agora:active{transform:translateX(-50%) scale(.95);}
-@keyframes pulseRed{
-  0%,100%{box-shadow:0 4px 20px rgba(192,57,43,.5);}
-  50%{box-shadow:0 4px 32px rgba(192,57,43,.85),0 0 0 6px rgba(192,57,43,.15);}
+#btn-ajuda-agora:active{transform:scale(.92);box-shadow:0 2px 8px rgba(0,0,0,.3);}
+#btn-ajuda-agora:hover{background:rgba(180,50,35,0.95);}
+#btn-ajuda-agora-tooltip{
+  position:fixed;bottom:4.3rem;left:.6rem;z-index:9997;
+  background:rgba(30,0,0,.92);color:#ffaaaa;
+  font-size:.90rem;padding:.35rem .75rem;border-radius:8px;
+  white-space:nowrap;pointer-events:none;
+  opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s;
 }
+#btn-ajuda-agora:hover + #btn-ajuda-agora-tooltip,
+#btn-ajuda-agora:focus + #btn-ajuda-agora-tooltip{opacity:1;transform:translateY(0);}
 #btn-ajuda-agora.hidden{display:none!important;}
 #ajuda-modal{
   position:fixed;inset:0;z-index:10005;
