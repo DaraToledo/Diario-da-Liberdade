@@ -1,0 +1,19 @@
+{
+  "name": "Meu Diário",
+  "short_name": "Diário",
+  "description": "Meu espaço pessoal de bem-estar e reflexões",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2a0f3a",
+  "theme_color": "#cb57f2",
+  "categories": ["health", "lifestyle"],
+  "icons": [
+    { "src": "./icon.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Registro de hoje", "short_name": "Hoje", "description": "Abrir percepção do dia", "url": "./" }
+  ]
+}
