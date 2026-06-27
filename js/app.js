@@ -338,3 +338,12 @@ resetInactivityTimer();
   }
 })();
 
+
+/* ─── INIT das novas features (movido do security.js) ───
+   Roda por último, quando todos os módulos já carregaram.
+   O typeof protege contra erro caso alguma função mude de lugar. */
+setTimeout(function(){
+  if(typeof mostrarAfirmacao === 'function') mostrarAfirmacao();
+  if(typeof loadTimeline === 'function') loadTimeline();
+  if(typeof atualizarVisibilidadeBtnAjuda === 'function') atualizarVisibilidadeBtnAjuda();
+}, 100);
