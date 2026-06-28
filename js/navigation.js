@@ -1,6 +1,6 @@
 /* ============================================================
    navigation.js — Navegação entre telas e abas.
-   Diário de Liberdade · gerado a partir do HTML único
+   Aurora · seu espaço seguro
    ============================================================ */
 
 /* ===== NAVIGATION ===== */
@@ -14,6 +14,22 @@ function showPage(id,tab){
   if(id==='historico'){ calViewDate=new Date(); renderHistorico(); }
   const idx = journeyOrder.indexOf(id);
   if(idx >= 0) currentJourneyIdx = idx;
+  // Sincroniza a sala ativa com a página aberta (mantém a room-bar correta)
+  if(typeof getRoomForPage === 'function'){
+    const r = getRoomForPage(id);
+    if(r && r !== currentRoom){
+      currentRoom = r;
+      document.querySelectorAll('.room-tab').forEach(btn => {
+        const on = btn.id === 'room-btn-' + r;
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      document.querySelectorAll('.subnav .tab').forEach(t => {
+        const rc = [...t.classList].find(c => c.startsWith('room-') && c.endsWith('-tab'));
+        if(rc){ t.classList.toggle('hidden-tab', rc.replace('room-','').replace('-tab','') !== r); }
+      });
+    }
+  }
   // Sempre sobe ao topo ao mudar de página
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -30,6 +46,56 @@ const PHASES = [
   { id: 3, pages: ['conquistas', 'compromisso', 'juridica'], firstPage: 'conquistas' },
 ];
 
+/* ===== AURORA — sistema de 3 SALAS (substitui as 4 fases) =====
+   Cada sala agrupa páginas por estado mental, não por sequência. */
+const ROOMS = {
+  dia:      { firstPage: 'percepcao',  pages: ['percepcao','emocional','reflexao','desabafo'] },
+  historia: { firstPage: 'historico',  pages: ['historico','juridica','conquistas','compromisso'] },
+  ajuda:    { firstPage: 'apoio',      pages: ['apoio','sinais'] },
+};
+let currentRoom = 'dia';
+
+function switchRoom(room, autoNavigate = true) {
+  if (!ROOMS[room]) return;
+  currentRoom = room;
+  _inSecondarySection = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Atualiza botões da room-bar
+  document.querySelectorAll('.room-tab').forEach(btn => {
+    const isActive = btn.id === 'room-btn-' + room;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
+
+  // Mostra só as subabas da sala ativa
+  document.querySelectorAll('.subnav .tab').forEach(t => {
+    const roomClass = [...t.classList].find(c => c.startsWith('room-') && c.endsWith('-tab'));
+    if (!roomClass) return;
+    const tabRoom = roomClass.replace('room-', '').replace('-tab', '');
+    t.classList.toggle('hidden-tab', tabRoom !== room);
+  });
+
+  // Navega para a primeira página da sala
+  if (autoNavigate) {
+    const firstTab = document.querySelector('.room-' + room + '-tab');
+    showPage(ROOMS[room].firstPage, firstTab);
+  }
+
+  // Salva no estado
+  if (typeof state !== 'undefined') {
+    state.currentRoom = room;
+    saveState();
+  }
+}
+
+function getRoomForPage(pageId) {
+  for (const [room, cfg] of Object.entries(ROOMS)) {
+    if (cfg.pages.includes(pageId)) return room;
+  }
+  return null;
+}
+
 // Seções secundárias (ficam no topbar, fora das fases)
 const SECONDARY_PAGES = ['apoio', 'historico'];
 
@@ -44,45 +110,13 @@ function getPhaseForPage(pageId) {
 }
 
 function switchPhase(phaseIdx, autoNavigate = true) {
-  _inSecondarySection = false;
-  currentPhase = phaseIdx;
-
-  // Sobe ao topo sempre
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  // Atualiza botões da phase-bar
-  document.querySelectorAll('.phase-tab').forEach((btn, i) => {
-    btn.classList.remove('active', 'done');
-    if (i < phaseIdx) btn.classList.add('done');
-    else if (i === phaseIdx) btn.classList.add('active');
-  });
-
-  // Mostra só as subabas da fase ativa
-  document.querySelectorAll('.tab').forEach(t => {
-    const phaseClass = [...t.classList].find(c => c.startsWith('phase-'));
-    if (!phaseClass) return;
-    const tabPhase = parseInt(phaseClass.replace('phase-', '').replace('-tab', ''));
-    if (tabPhase === phaseIdx) {
-      t.classList.remove('hidden-tab');
-    } else {
-      t.classList.add('hidden-tab');
-    }
-  });
-
-  // Navega para a primeira página da fase
-  if (autoNavigate) {
-    const firstTab = document.querySelector(`.phase-${phaseIdx}-tab`);
-    const firstPageId = PHASES[phaseIdx].firstPage;
-    showPage(firstPageId, firstTab);
-  }
-
-  // Salva fase no estado
-  if (typeof state !== 'undefined') {
-    state.currentPhase = phaseIdx;
-    saveState();
-  }
-  // Controle de visibilidade do CVV
-  if(typeof checkCVVVisibility === 'function') checkCVVVisibility(phaseIdx);
+  /* PONTE de compatibilidade: o app antigo chamava switchPhase.
+     Agora redirecionamos para o sistema de salas. As fases 0-2
+     pertenciam à vivência do dia → sala 'dia'. A fase 3 tinha
+     conquistas/jurídico → sala 'historia'. */
+  const phaseToRoom = { 0: 'dia', 1: 'dia', 2: 'dia', 3: 'historia' };
+  const room = phaseToRoom[phaseIdx] || 'dia';
+  switchRoom(room, autoNavigate);
 }
 
 // Navega para seções secundárias (Histórico, Rede de Apoio) pelo topbar
@@ -153,10 +187,10 @@ function nextPhase() {
   setTimeout(() => { if(!_inSecondarySection) switchPhase(next); }, 200);
 }
 
-// Inicia o sistema de fases
+// Inicia a navegação (sistema de salas)
 function initPhaseNav() {
-  const savedPhase = (typeof state !== 'undefined' && state.currentPhase) ? state.currentPhase : 0;
-  switchPhase(savedPhase, true);
+  const savedRoom = (typeof state !== 'undefined' && state.currentRoom) ? state.currentRoom : 'dia';
+  switchRoom(ROOMS[savedRoom] ? savedRoom : 'dia', true);
 }
 
 
@@ -196,4 +230,3 @@ function apoioTab(btn, tabId){
   if(tabId==='apoio-qr'&&!window._qrGerado){ window._qrGerado=true; setTimeout(gerarQRCode,100); }
   if(tabId==='apoio-plano') gerarPlanoSeguranca();
 }
-
